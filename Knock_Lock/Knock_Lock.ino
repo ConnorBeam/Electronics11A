@@ -11,8 +11,9 @@ const int quietKnock = 75;
 const int loudKnock = 175;
 boolean locked = false;
 int numberOfKnocks = 0;
+int prevNumberOfKnocks = 0;
 void setup() {
-  myServo.attach(9);
+  myServo.attach(6);
   pinMode(yellowLed, OUTPUT);
   pinMode(redLed, OUTPUT);
   pinMode(greenLed, OUTPUT);
@@ -33,6 +34,7 @@ void loop() {
       digitalWrite(redLed, HIGH);
       myServo.write(90);
       Serial.println("The box is locked!");
+      delay(1000);
     }
   }
   if (locked == true) {
@@ -41,8 +43,10 @@ void loop() {
       if (checkForKnock(knockVal) == true) {
         numberOfKnocks++;
       }
-      Serial.print(3 - numberOfKnocks);
-      Serial.println(" more knocks to go");
+      if (numberOfKnocks != prevNumberOfKnocks) {
+        Serial.print(3 - numberOfKnocks);
+        Serial.println(" more knocks to go");
+      }
     }
     if (numberOfKnocks >= 3) {
       locked = false;
@@ -53,10 +57,11 @@ void loop() {
       Serial.println("The box is unlocked!");
       numberOfKnocks = 0;
     }
+    prevNumberOfKnocks = numberOfKnocks;
   }
-//  delay(1000);
-//  Serial.print("RawSensorValue:");
-//  Serial.println(knockVal);
+  //  delay(1000);
+  //  Serial.print("RawSensorValue:");
+  //  Serial.println(knockVal);
 }
 boolean checkForKnock(int value) {
   if (value > quietKnock && value < loudKnock) {
@@ -66,6 +71,8 @@ boolean checkForKnock(int value) {
     Serial.print("Valid knock of value ");
     Serial.println(value);
     return true;
+  } if (value < 30) {
+    return false;
   } else {
     Serial.print("Bad knock value ");
     Serial.println(value);
