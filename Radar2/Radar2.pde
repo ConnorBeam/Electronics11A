@@ -1,23 +1,34 @@
 import processing.serial.*;
+import ddf.minim.*;
 Serial myPort;
+Minim minim;
+AudioSample alarm;
+AudioSample blip;
 int centerPoint = height/2+250;
 String data;
 int index1;
 String angle = "";
 String distance= "";
-float lineX, lineY, lineX2, lineY2, xLineSegment, yLineSegment, rad, iAngle, iDistance, pixsDistance;
+float lineX, lineY, lineX2, lineY2, xLineSegment, yLineSegment, rad, iAngle, iDistance, pixsDistance, m, prevtime;
 float middleY = height-200/2;
 PGraphics canvas;
+PGraphics canvas2;
 
 void setup() {
+  minim = new Minim(this);
+  blip = minim.loadSample("blipp.mp3", 512);
+  alarm = minim.loadSample("Navy Alarm Buzzer.mp3", 512);
   size (1920, 1080);
   myPort = new Serial(this, "COM5", 9600);
   myPort.bufferUntil('.');
   canvas = createGraphics(width, height);
-}
+  canvas2 = createGraphics(width, height);
+
 void draw() {
+  m = millis();
   background(0);
   fadeGraphics(canvas, 2);
+  fadeGraphics(canvas2, 1);
   canvas.beginDraw();
   canvas.translate(width/2, height/2+250);
   canvas.rotate(PI);
@@ -39,10 +50,23 @@ void draw() {
   canvas.stroke(255, 0, 0);
   canvas.line(lineX, lineY, lineX2, lineY2);
   canvas.endDraw();
+  canvas2.beginDraw();
+  if (iDistance<50 && m-prevtime >= 1000) {
+    blip.trigger();
+    canvas2.textSize(40);
+    canvas2.text("Bogey", lineX, lineY);
+    prevtime = m;
+  }
+  canvas2.endDraw();
   image(canvas, 0, 0);
+  image(canvas2, 0, 0);
   textSize(100);
   textAlign(CENTER);
-  text("distance:"+distance+"CM   angle:"+angle+"°", width/2, 1000);
+  text("distance:"+distance+"cm   angle:"+angle+"°", width/2, 1000);
+  if (iDistance<20 && m-prevtime >= 6000) {
+    alarm.trigger();
+    prevtime = m;
+  }
 }
 
 void serialEvent (Serial myPort) {
